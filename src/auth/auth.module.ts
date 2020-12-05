@@ -7,9 +7,6 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { VerificationTokenRepository } from './verification-token.repository';
-import { VerificationTokenService } from './verification-token.service';
 
 @Module({
   imports: [
@@ -22,14 +19,8 @@ import { VerificationTokenService } from './verification-token.service';
       }),
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([VerificationTokenRepository]),
   ],
-  providers: [
-    AuthService,
-    VerificationTokenService,
-    LocalStrategy,
-    JwtStrategy,
-  ],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}

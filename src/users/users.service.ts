@@ -3,7 +3,6 @@ import { UserRepository } from './user.repository';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindConditions } from 'typeorm/find-options/FindConditions';
-import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -14,22 +13,13 @@ export class UsersService {
     return this.userRepository.findOne({ ...this.defaultConditions, email });
   }
 
-  async create(
-    createUserDto: CreateUserDto,
-    entityManager?: EntityManager,
-  ): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     if (await this.userRepository.findOne({ email: createUserDto.email })) {
       throw new ConflictException(
-        `User with email ${createUserDto.email} already exits`,
+        `User with email ${createUserDto.email} already exists`,
       );
     }
     const user = this.userRepository.create(createUserDto);
-    return this.getRepository(entityManager).save(user);
-  }
-
-  private getRepository(entityManager?: EntityManager) {
-    return entityManager
-      ? entityManager.getCustomRepository(UserRepository)
-      : this.userRepository;
+    return this.userRepository.save(user);
   }
 }
