@@ -3,6 +3,7 @@ import { UserRepository } from './user.repository';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindConditions } from 'typeorm/find-options/FindConditions';
+import { SearchUsersDto } from './dto/search-users.dto';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +15,18 @@ export class UsersService {
       ...this.defaultConditions,
       ...params,
     });
+  }
+
+  async search(
+    params: SearchUsersDto,
+  ): Promise<{ count: number; users: User[] }> {
+    const { skip, take } = params;
+    const [users, count] = await this.userRepository.findAndCount({
+      skip,
+      take,
+      order: { createAt: -1 },
+    });
+    return { count, users };
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
