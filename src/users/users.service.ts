@@ -9,8 +9,11 @@ export class UsersService {
   private defaultConditions: FindConditions<User> = { isActive: true };
   constructor(private userRepository: UserRepository) {}
 
-  async findOne(email: string): Promise<User | undefined> {
-    return this.userRepository.findOne({ ...this.defaultConditions, email });
+  async findOne(params: FindConditions<User>): Promise<User | undefined> {
+    return this.userRepository.findOne({
+      ...this.defaultConditions,
+      ...params,
+    });
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
