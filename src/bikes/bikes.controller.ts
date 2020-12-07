@@ -2,14 +2,12 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   NotFoundException,
   Param,
   Post,
   Put,
   Query,
-  Request,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
@@ -68,7 +66,7 @@ export class BikesController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.MANAGER)
   @Delete(':id')
-  delete(@Param('id') id: string, @Request() req) {
+  delete(@Param('id') id: string) {
     return this.bikesService.delete(id);
   }
 
@@ -78,7 +76,6 @@ export class BikesController {
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Request() req,
     @Body() updateBikeDataDto: CreateBikeDataDto,
   ) {
     return this.bikesService.update(id, updateBikeDataDto);
