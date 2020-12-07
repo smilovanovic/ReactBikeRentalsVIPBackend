@@ -22,7 +22,9 @@
     "migrations:up": "ts-node node_modules/.bin/typeorm migration:run",
     "migrations:down": "ts-node node_modules/.bin/typeorm migration:revert",
     "migrations:create": "ts-node node_modules/.bin/typeorm migration:create -n ",
-    "migrations:generate": "ts-node node_modules/.bin/typeorm migration:generate -n "
+    "migrations:generate": "ts-node node_modules/.bin/typeorm migration:generate -n ",
+    "schema:sync": "ts-node node_modules/.bin/typeorm schema:sync",
+    "schema:drop": "ts-node node_modules/.bin/typeorm schema:drop"
   },
   "dependencies": {
     "@nestjs/common": "^7.5.1",
