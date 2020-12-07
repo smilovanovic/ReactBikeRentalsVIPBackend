@@ -1,10 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
   Post,
+  Put,
   Query,
   Request,
   UseGuards,
@@ -18,7 +21,8 @@ import { UserRole } from './user.entity';
 import { UsersService } from './users.service';
 import { SearchUsersDto } from './dto/search-users.dto';
 import { ValidatePipe } from '../common/validate.pipe';
-import { UpsertUserDataDto } from './dto/upsert-user-data.dto';
+import { CreateUserDataDto } from './dto/create-user-data.dto';
+import { UpdateUserDataDto } from './dto/update-user-data.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
@@ -34,6 +38,14 @@ export class UsersController {
       count,
       users: users.map((user) => omit(user, ['password'])),
     };
+  }
+
+  @UsePipes(ValidatePipe)
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.MANAGER)
+  @Post()
+  create(@Body() createUserDataDto: CreateUserDataDto) {
+    return this.usersService.create(createUserDataDto);
   }
 
   @Get('profile')
@@ -52,11 +64,28 @@ export class UsersController {
     return omit(user, ['password']);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.MANAGER)
+  @Delete(':id')
+  delete(@Param('id') id: string, @Request() req) {
+    if (req.user.id === id) {
+      throw new ForbiddenException("Can't delete your own account");
+    }
+    return this.usersService.delete(id);
+  }
+
   @UsePipes(ValidatePipe)
   @UseGuards(RolesGuard)
   @Roles(UserRole.MANAGER)
-  @Post()
-  create(@Body() upsertUserDataDto: UpsertUserDataDto) {
-    return this.usersService.create(upsertUserDataDto);
+  @Put(':id')
+  update(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() updateUserDataDto: UpdateUserDataDto,
+  ) {
+    if (req.user.id === id) {
+      throw new ForbiddenException("Can't update your own account");
+    }
+    return this.usersService.update(id, updateUserDataDto);
   }
 }
