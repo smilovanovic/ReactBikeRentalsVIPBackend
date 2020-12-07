@@ -10,9 +10,12 @@ export class UsersService {
   private defaultConditions: FindConditions<User> = { isActive: true };
   constructor(private userRepository: UserRepository) {}
 
-  async findOne(params: FindConditions<User>): Promise<User | undefined> {
+  findOne(
+    params: FindConditions<User>,
+    skipDefaultParams = false,
+  ): Promise<User | undefined> {
     return this.userRepository.findOne({
-      ...this.defaultConditions,
+      ...(skipDefaultParams ? {} : this.defaultConditions),
       ...params,
     });
   }

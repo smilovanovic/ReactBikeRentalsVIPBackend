@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
+  Param,
   Post,
   Query,
   Request,
@@ -23,6 +25,8 @@ import { UpsertUserDataDto } from './dto/upsert-user-data.dto';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.MANAGER)
   @Get('')
   async getUsers(@Query() searchUsersDto: SearchUsersDto) {
     const { count, users } = await this.usersService.search(searchUsersDto);
@@ -35,6 +39,17 @@ export class UsersController {
   @Get('profile')
   async getProfile(@Request() req) {
     return omit(req.user, ['password', 'isActive']);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.MANAGER)
+  @Get(':id')
+  async getUser(@Param('id') id: string) {
+    const user = await this.usersService.findOne({ id }, true);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return omit(user, ['password']);
   }
 
   @UsePipes(ValidatePipe)
