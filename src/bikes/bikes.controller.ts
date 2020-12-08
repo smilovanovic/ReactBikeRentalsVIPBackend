@@ -44,6 +44,13 @@ export class BikesController {
     return this.bikesService.existingValues();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.MANAGER)
+  @Get('rents')
+  getRents() {
+    return this.bikesService.rents();
+  }
+
   @UsePipes(ValidatePipe)
   @UseGuards(RolesGuard)
   @Roles(UserRole.MANAGER)

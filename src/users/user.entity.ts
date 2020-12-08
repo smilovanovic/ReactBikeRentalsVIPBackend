@@ -5,8 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   BeforeInsert,
+  OneToMany,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { BikeRating } from '../bikes/bike-rating.entity';
+import { BikeRent } from '../bikes/bike-rent.entity';
 
 export enum UserRole {
   MANAGER = 'manager',
@@ -40,6 +43,12 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @OneToMany(() => BikeRating, (rating) => rating.bike)
+  ratings: BikeRating[];
+
+  @OneToMany(() => BikeRent, (rent) => rent.bike)
+  rents: BikeRent[];
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createAt: Date | string;

@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { BikeRepository } from './bike.repository';
+import { BikeRentRepository } from './bike-rent.repository';
 import { Bike } from './bike.entity';
 import { CreateBikeDataDto } from './dto/create-bike-data.dto';
 import { FindConditions } from 'typeorm/find-options/FindConditions';
 import { SearchBikesDto } from './dto/search-bikes.dto';
+import { Between } from 'typeorm';
 
 @Injectable()
 export class BikesService {
-  constructor(private bikeRepository: BikeRepository) {}
+  constructor(
+    private bikeRepository: BikeRepository,
+    private bikeRentRepository: BikeRentRepository,
+  ) {}
 
   findOne(params: FindConditions<Bike>): Promise<Bike | undefined> {
     return this.bikeRepository.findOne(params);
@@ -16,7 +21,10 @@ export class BikesService {
   async search(
     params: SearchBikesDto,
   ): Promise<{ count: number; bikes: Bike[] }> {
-    const { skip, take, order, ...where } = params;
+    const { skip, take, order, rating, ...where } = params;
+    if (rating) {
+      where['rating'] = Between(Math.ceil(rating - 1), Math.ceil(rating));
+    }
     const [bikes, count] = await this.bikeRepository.findAndCount({
       skip,
       take,
@@ -53,5 +61,9 @@ export class BikesService {
         .getRawMany();
       return { ...(await acc), [field]: rows.map((el) => el[field]) };
     }, {});
+  }
+
+  rents() {
+    return this.bikeRentRepository.find({ relations: ['user', 'bike'] });
   }
 }

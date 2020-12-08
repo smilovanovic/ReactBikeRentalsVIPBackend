@@ -8,6 +8,7 @@ import {
   BeforeInsert,
 } from 'typeorm';
 import { BikeRating } from './bike-rating.entity';
+import { BikeRent } from './bike-rent.entity';
 
 @Entity()
 export class Bike {
@@ -23,11 +24,14 @@ export class Bike {
   @Column()
   location: string;
 
-  @Column({ default: 0 })
+  @Column({ type: 'decimal', default: 0 })
   rating: number;
 
   @OneToMany(() => BikeRating, (rating) => rating.bike)
   ratings: BikeRating[];
+
+  @OneToMany(() => BikeRent, (rent) => rent.bike)
+  rents: BikeRent[];
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createAt: Date | string;

@@ -1,6 +1,5 @@
 import {
   Entity,
-  Column,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
@@ -10,18 +9,21 @@ import { Bike } from './bike.entity';
 import { User } from '../users/user.entity';
 
 @Entity()
-export class BikeRating {
+export class BikeRent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Bike, (bike) => bike.ratings)
+  @ManyToOne(() => Bike, (bike) => bike.rents)
   bike: Bike;
 
-  @ManyToOne(() => User, (user) => user.ratings)
+  @ManyToOne(() => User, (user) => user.rents)
   user: User;
 
-  @Column({ type: 'decimal', default: 1 })
-  rating: number;
+  @CreateDateColumn({ type: 'timestamptz' })
+  from: Date | string;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  to: Date | string;
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createAt: Date | string;

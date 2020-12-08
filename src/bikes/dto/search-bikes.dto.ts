@@ -5,4 +5,5 @@ export class SearchBikesDto {
   model?: string;
   color?: string;
   location?: string;
+  rating?: number;
 }
