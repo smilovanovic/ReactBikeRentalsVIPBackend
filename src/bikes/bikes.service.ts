@@ -5,7 +5,8 @@ import { Bike } from './bike.entity';
 import { CreateBikeDataDto } from './dto/create-bike-data.dto';
 import { FindConditions } from 'typeorm/find-options/FindConditions';
 import { SearchBikesDto } from './dto/search-bikes.dto';
-import { Between } from 'typeorm';
+import { Between, LessThan, MoreThan } from 'typeorm';
+import { SearchRentsDto } from './dto/search-rents.dto';
 
 @Injectable()
 export class BikesService {
@@ -63,7 +64,13 @@ export class BikesService {
     }, {});
   }
 
-  rents() {
-    return this.bikeRentRepository.find({ relations: ['user', 'bike'] });
+  rents(searchRentsDto: SearchRentsDto) {
+    return this.bikeRentRepository.find({
+      where: {
+        from: LessThan(searchRentsDto.endDate),
+        to: MoreThan(searchRentsDto.startDate),
+      },
+      relations: ['user', 'bike'],
+    });
   }
 }

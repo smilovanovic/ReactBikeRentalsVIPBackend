@@ -20,6 +20,7 @@ import { BikesService } from './bikes.service';
 import { ValidatePipe } from '../common/validate.pipe';
 import { CreateBikeDataDto } from './dto/create-bike-data.dto';
 import { SearchBikesDto } from './dto/search-bikes.dto';
+import { SearchRentsDto } from './dto/search-rents.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('bikes')
@@ -47,8 +48,8 @@ export class BikesController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.MANAGER)
   @Get('rents')
-  getRents() {
-    return this.bikesService.rents();
+  getRents(@Query() searchRentsDto: SearchRentsDto) {
+    return this.bikesService.rents(searchRentsDto);
   }
 
   @UsePipes(ValidatePipe)
