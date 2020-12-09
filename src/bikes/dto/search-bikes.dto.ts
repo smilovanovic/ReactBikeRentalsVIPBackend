@@ -6,4 +6,6 @@ export class SearchBikesDto {
   color?: string;
   location?: string;
   rating?: number;
+  availableFrom?: string;
+  availableTo?: string;
 }

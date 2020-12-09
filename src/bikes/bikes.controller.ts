@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  Request,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
@@ -30,8 +31,11 @@ export class BikesController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.CLIENT)
   @Get('')
-  async getBikes(@Query() searchBikesDto: SearchBikesDto) {
-    const { count, bikes } = await this.bikesService.search(searchBikesDto);
+  async getBikes(@Query() searchBikesDto: SearchBikesDto, @Request() req) {
+    const { count, bikes } = await this.bikesService.search(
+      searchBikesDto,
+      req.user,
+    );
     return {
       count,
       bikes,
@@ -46,10 +50,19 @@ export class BikesController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.MANAGER, UserRole.CLIENT)
   @Get('rents')
-  getRents(@Query() searchRentsDto: SearchRentsDto) {
-    return this.bikesService.rents(searchRentsDto);
+  async getRents(@Query() searchRentsDto: SearchRentsDto, @Request() req) {
+    const rents = await this.bikesService.rents(searchRentsDto);
+    if (!req.user.isManager()) {
+      return rents.map((rent) =>
+        omit({ ...rent, isMyRent: rent.user.id === req.user.id }, [
+          'bike',
+          'user',
+        ]),
+      );
+    }
+    return rents;
   }
 
   @UsePipes(ValidatePipe)
@@ -61,14 +74,14 @@ export class BikesController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles(UserRole.MANAGER)
+  @Roles(UserRole.MANAGER, UserRole.CLIENT)
   @Get(':id')
   async getBike(@Param('id') id: string) {
     const bike = await this.bikesService.findOne({ id });
     if (!bike) {
       throw new NotFoundException('Bike not found');
     }
-    return omit(bike, ['password']);
+    return bike;
   }
 
   @UseGuards(RolesGuard)
@@ -87,5 +100,20 @@ export class BikesController {
     @Body() updateBikeDataDto: CreateBikeDataDto,
   ) {
     return this.bikesService.update(id, updateBikeDataDto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.CLIENT)
+  @Post(':id/ratings')
+  async rate(
+    @Param('id') id: string,
+    @Body() data: { rating: number },
+    @Request() req,
+  ) {
+    const bike = await this.bikesService.findOne({ id });
+    if (!bike) {
+      throw new NotFoundException('Bike not found');
+    }
+    return this.bikesService.rate(bike, req.user, data.rating);
   }
 }
