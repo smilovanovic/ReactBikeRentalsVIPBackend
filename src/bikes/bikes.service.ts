@@ -1,15 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { BikeRepository } from './bike.repository';
 import { BikeRentRepository } from './bike-rent.repository';
 import { Bike } from './bike.entity';
 import { CreateBikeDataDto } from './dto/create-bike-data.dto';
 import { FindConditions } from 'typeorm/find-options/FindConditions';
-import { Between, LessThan, MoreThan } from 'typeorm';
+import { Between, LessThan, MoreThan, Not } from 'typeorm';
 import { SearchBikesDto } from './dto/search-bikes.dto';
 import { SearchRentsDto } from './dto/search-rents.dto';
 import * as moment from 'moment';
 import { BikeRatingRepository } from './bike-rating.repository';
 import { User } from '../users/user.entity';
+import { BikeRent } from './bike-rent.entity';
+import { CreateRentDto } from './dto/create-rent.dto';
 
 @Injectable()
 export class BikesService {
@@ -49,7 +55,10 @@ export class BikesService {
       const momentFrom = moment(availableFrom);
       const momentTo = moment(availableTo);
       if (momentFrom.isValid() && momentTo.isValid()) {
-        const minutes = Math.ceil((momentTo.valueOf() - momentFrom.valueOf()) / 1000 * 60);
+        let minutes = Math.ceil(
+          (momentTo.valueOf() - momentFrom.valueOf()) / 1000 / 60,
+        );
+        minutes--;
         const from = moment(availableFrom).toISOString();
         const to = moment(availableTo).toISOString();
         const sqlAddition = `
@@ -79,6 +88,7 @@ export class BikesService {
     if (wKeys.length > 0) {
       for (let i = 0; i < wKeys.length; i++) {
         w += `AND ${wKeys[i]} = $${i + 3}`;
+        sqlCount += `AND ${wKeys[i]} = $${i + 1}`;
         mappings.push(where[wKeys[i]]);
       }
     }
@@ -89,10 +99,8 @@ export class BikesService {
       LIMIT $1 OFFSET $2
     `;
 
-    sqlCount += `${w}`;
-
     const bikes = await this.bikeRepository.query(sql, mappings);
-    mappings.splice(0, 3);
+    mappings.splice(0, 2);
     const [{ count }] = await this.bikeRepository.query(sqlCount, mappings);
     return { count, bikes };
   }
@@ -126,12 +134,16 @@ export class BikesService {
     }, {});
   }
 
-  rents(searchRentsDto: SearchRentsDto) {
+  rents(searchRentsDto: SearchRentsDto): Promise<BikeRent[]> {
+    const where = {
+      from: LessThan(searchRentsDto.endDate),
+      to: MoreThan(searchRentsDto.startDate),
+    };
+    if (searchRentsDto.bikeId) {
+      where['bikeId'] = searchRentsDto.bikeId;
+    }
     return this.bikeRentRepository.find({
-      where: {
-        from: LessThan(searchRentsDto.endDate),
-        to: MoreThan(searchRentsDto.startDate),
-      },
+      where,
       relations: ['user', 'bike'],
     });
   }
@@ -154,5 +166,60 @@ export class BikesService {
     bike.rating = totalRating;
     await this.bikeRepository.save(bike);
     return bike;
+  }
+
+  async upsertRent(
+    bike: Bike,
+    user: User,
+    createRentDto: CreateRentDto,
+  ): Promise<BikeRent> {
+    let bikeRent;
+    if (createRentDto.id) {
+      bikeRent = await this.bikeRentRepository.findOne({
+        id: createRentDto.id,
+        bike,
+        user,
+      });
+      if (!bikeRent) throw new NotFoundException('Bike rent not found');
+      bikeRent.from = createRentDto.startDate;
+      bikeRent.to = createRentDto.endDate;
+    }
+    if (!bikeRent) {
+      bikeRent = this.bikeRentRepository.create({
+        bike,
+        user,
+        from: createRentDto.startDate,
+        to: createRentDto.endDate,
+      });
+    }
+    const where = {
+      from: LessThan(createRentDto.endDate),
+      to: MoreThan(createRentDto.startDate),
+      bike,
+    };
+    if (createRentDto.id) {
+      where['id'] = Not(createRentDto.id);
+    }
+    const exists = await this.bikeRentRepository.count(where);
+    if (exists > 0) {
+      throw new ConflictException(
+        'Bike is not available in the selected range',
+      );
+    }
+    await this.bikeRentRepository.save(bikeRent);
+    return bikeRent;
+  }
+
+  async deleteRent(bikeId: string, user: User, id: string) {
+    const bikeRent = await this.bikeRentRepository.findOne({ id });
+    if (
+      !bikeRent ||
+      bikeRent.bikeId !== bikeId ||
+      bikeRent.userId !== user.id
+    ) {
+      throw new NotFoundException('Bike rent not found');
+    }
+    const result = await this.bikeRentRepository.delete(id);
+    return !!result.affected;
   }
 }

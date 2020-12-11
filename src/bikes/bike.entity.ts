@@ -5,7 +5,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-  BeforeInsert,
 } from 'typeorm';
 import { BikeRating } from './bike-rating.entity';
 import { BikeRent } from './bike-rent.entity';
@@ -38,11 +37,4 @@ export class Bike {
 
   @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date | string;
-
-  @BeforeInsert()
-  async allToLowerCase() {
-    this.model = this.model.toLowerCase();
-    this.color = this.color.toLowerCase();
-    this.location = this.location.toLowerCase();
-  }
 }

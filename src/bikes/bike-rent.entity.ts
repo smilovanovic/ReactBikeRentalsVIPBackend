@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  Column,
 } from 'typeorm';
 import { Bike } from './bike.entity';
 import { User } from '../users/user.entity';
@@ -16,8 +17,14 @@ export class BikeRent {
   @ManyToOne(() => Bike, (bike) => bike.rents)
   bike: Bike;
 
+  @Column()
+  bikeId: string;
+
   @ManyToOne(() => User, (user) => user.rents)
   user: User;
+
+  @Column()
+  userId: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
   from: Date | string;

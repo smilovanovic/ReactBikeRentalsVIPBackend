@@ -22,6 +22,7 @@ import { ValidatePipe } from '../common/validate.pipe';
 import { CreateBikeDataDto } from './dto/create-bike-data.dto';
 import { SearchBikesDto } from './dto/search-bikes.dto';
 import { SearchRentsDto } from './dto/search-rents.dto';
+import { CreateRentDto } from './dto/create-rent.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('bikes')
@@ -115,5 +116,31 @@ export class BikesController {
       throw new NotFoundException('Bike not found');
     }
     return this.bikesService.rate(bike, req.user, data.rating);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.CLIENT)
+  @Post(':id/rent')
+  async rentBike(
+    @Param('id') id: string,
+    @Body() createRentDto: CreateRentDto,
+    @Request() req,
+  ) {
+    const bike = await this.bikesService.findOne({ id });
+    if (!bike) {
+      throw new NotFoundException('Bike not found');
+    }
+    return this.bikesService.upsertRent(bike, req.user, createRentDto);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.CLIENT)
+  @Delete(':id/rent/:rentId')
+  async deleteRentBike(
+    @Param('id') id: string,
+    @Param('rentId') rentId: string,
+    @Request() req,
+  ) {
+    return this.bikesService.deleteRent(id, req.user, rentId);
   }
 }
