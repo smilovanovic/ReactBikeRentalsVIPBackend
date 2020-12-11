@@ -83,7 +83,6 @@ export class BikesService {
         mappings.push(where[wKeys[i]]);
       }
     }
-    console.log(o[orderKey]);
     sql += `
       ${w}
       ORDER BY b."${orderKey}" ${o[orderKey] === -1 ? 'DESC' : 'ASC'}
@@ -126,10 +125,11 @@ export class BikesService {
   }
 
   rents(searchRentsDto: SearchRentsDto): Promise<BikeRent[]> {
-    const where = {
-      from: LessThan(searchRentsDto.endDate),
-      to: MoreThan(searchRentsDto.startDate),
-    };
+    const where = {};
+    if (searchRentsDto.endDate && searchRentsDto.startDate) {
+      where['from'] = LessThan(searchRentsDto.endDate);
+      where['to'] = MoreThan(searchRentsDto.startDate);
+    }
     if (searchRentsDto.bikeId) {
       where['bikeId'] = searchRentsDto.bikeId;
     }

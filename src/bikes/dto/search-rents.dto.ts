@@ -1,5 +1,5 @@
 export class SearchRentsDto {
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   bikeId?: string;
 }
