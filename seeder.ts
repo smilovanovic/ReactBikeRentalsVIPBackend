@@ -1,9 +1,8 @@
 import { NestFactory } from '@nestjs/core';
+import * as faker from 'faker';
 import { AppModule } from './src/app.module';
 import { UsersService } from './src/users/users.service';
 import { UserRole } from './src/users/user.entity';
-import * as faker from 'faker';
-import { IsString } from 'class-validator';
 import { BikesService } from './src/bikes/bikes.service';
 
 async function bootstrap() {
@@ -25,7 +24,7 @@ async function bootstrap() {
       }),
     );
   }
-  const users = await Promise.all(usersPromises);
+  await Promise.all(usersPromises);
 
   const bikesService = app.get(BikesService);
   const bikesPromises = [];
