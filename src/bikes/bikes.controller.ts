@@ -66,6 +66,13 @@ export class BikesController {
     return rents;
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.CLIENT)
+  @Get('my-rents')
+  getMyRents(@Request() req) {
+    return this.bikesService.rentsMany({ userId: req.user.id });
+  }
+
   @UsePipes(ValidatePipe)
   @UseGuards(RolesGuard)
   @Roles(UserRole.MANAGER)

@@ -148,6 +148,16 @@ export class BikesService {
     });
   }
 
+  rentsMany(where: FindConditions<BikeRent>): Promise<BikeRent[]> {
+    return this.bikeRentRepository.find({
+      where,
+      order: {
+        from: -1,
+      },
+      relations: ['bike'],
+    });
+  }
+
   async rate(bike: Bike, user: User, rating: number): Promise<Bike> {
     let bikeRating = await this.bikeRatingRepository.findOne({ bike, user });
     if (!bikeRating) {
