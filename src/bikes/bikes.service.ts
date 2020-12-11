@@ -8,7 +8,7 @@ import { BikeRentRepository } from './bike-rent.repository';
 import { Bike } from './bike.entity';
 import { CreateBikeDataDto } from './dto/create-bike-data.dto';
 import { FindConditions } from 'typeorm/find-options/FindConditions';
-import { Between, LessThan, MoreThan, Not } from 'typeorm';
+import { LessThan, MoreThan, Not } from 'typeorm';
 import { SearchBikesDto } from './dto/search-bikes.dto';
 import { SearchRentsDto } from './dto/search-rents.dto';
 import * as moment from 'moment';
@@ -33,18 +33,7 @@ export class BikesService {
     params: SearchBikesDto,
     user: User,
   ): Promise<{ count: number; bikes: Bike[] }> {
-    const {
-      skip,
-      take,
-      order,
-      rating,
-      availableFrom,
-      availableTo,
-      ...where
-    } = params;
-    if (rating) {
-      where['rating'] = Between(Math.ceil(rating - 1), Math.ceil(rating));
-    }
+    const { skip, take, order, availableFrom, availableTo, ...where } = params;
     let sql = `
       SELECT b.*, br.rating as userRating from bike b
       LEFT JOIN bike_rating AS br ON br."bikeId" = b."id" AND br."userId" = '${user.id}'
@@ -87,8 +76,10 @@ export class BikesService {
     let w = '';
     if (wKeys.length > 0) {
       for (let i = 0; i < wKeys.length; i++) {
-        w += `AND ${wKeys[i]} = $${i + 3}`;
-        sqlCount += `AND ${wKeys[i]} = $${i + 1}`;
+        let sign = '=';
+        if (wKeys[i] === 'rating') sign = '>=';
+        w += `AND b."${wKeys[i]}" ${sign} $${i + 3}`;
+        sqlCount += `AND b."${wKeys[i]}" ${sign} $${i + 1}`;
         mappings.push(where[wKeys[i]]);
       }
     }
